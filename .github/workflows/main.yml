@@ -1,0 +1,48 @@
+name: Build PSER APK with Location
+on: [push, workflow_dispatch]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup environment
+      run: |
+        sudo apt update
+        sudo apt install -y nodejs npm openjdk-11-jdk
+        sudo npm install -g cordova@11.0.0
+        
+    - name: Create Cordova app
+      run: |
+        cordova create pserapp com.pser.survey "PSER Survey"
+        cd pserapp
+        
+        # Copy all project files
+        cp ../index.html www/
+        cp ../styles.css www/
+        cp ../app.js www/
+        cp ../manifest.json www/
+        cp ../sw.js www/
+        
+    - name: Add Android platform
+      run: |
+        cd pserapp
+        cordova platform add android@10.1.2
+      
+    - name: Add location plugin
+      run: |
+        cd pserapp
+        cordova plugin add cordova-plugin-geolocation
+      
+    - name: Build APK
+      run: |
+        cd pserapp
+        cordova build android -- --no-daemon
+      
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: pser-survey-with-location
+        path: pserapp/platforms/android/app/build/outputs/apk/debug/app-debug.apk
