@@ -1,0 +1,39 @@
+name: Build PSER APK
+on: [push, workflow_dispatch]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        
+    - name: Install Cordova globally
+      run: npm install -g cordova
+      
+    - name: Create Cordova app
+      run: |
+        cordova create pserapp com.pser.survey "PSER Survey"
+        cd pserapp
+        cp ../index.html www/
+        cp ../styles.css www/
+        cp ../app.js www/
+        cp ../manifest.json www/
+        cp ../sw.js www/
+        
+    - name: Build Android APK
+      run: |
+        cd pserapp
+        cordova platform add android
+        cordova build android
+        
+    - name: Upload APK
+      uses: actions/upload-artifact@v4
+      with:
+        name: pser-survey-apk
+        path: pserapp/platforms/android/app/build/outputs/apk/debug/app-debug.apk
